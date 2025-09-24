@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 8080;
 
 connectDB();
 
-app.use(cors({ origin: "*" }));
+app.use(cors({ origin: "https://interview-prep-tool-mu.vercel.app" }));
 app.use(express.json());
 
 app.use("/api", interviewRoutes);
