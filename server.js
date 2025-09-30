@@ -18,6 +18,7 @@ app.use(
     origin: [
       "https://interview-prep-tool-mu.vercel.app",
       "https://interview-prep-tool-obkvw1kyv-sandesh-lawhales-projects.vercel.app",
+      "*",
     ],
   })
 );
