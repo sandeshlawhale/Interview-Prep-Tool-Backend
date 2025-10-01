@@ -6,6 +6,8 @@ import jobRoutes from "./src/routes/jobRoutes.js";
 import { errorHandler } from "./src/middleware/errorHandler.js";
 import { connectDB } from "./src/config/database.js";
 
+import v2InterviewRoutes from "./src/v2/routes/interviewRoutes.js";
+
 dotenv.config();
 
 const app = express();
@@ -13,16 +15,26 @@ const PORT = process.env.PORT || 8080;
 
 connectDB();
 
+const allowedOrigins = [
+  "https://interview-prep-tool-mu.vercel.app",
+  "https://interview-prep-tool-obkvw1kyv-sandesh-lawhales-projects.vercel.app",
+];
+
 app.use(
   cors({
-    origin: [
-      "https://interview-prep-tool-mu.vercel.app",
-      "https://interview-prep-tool-obkvw1kyv-sandesh-lawhales-projects.vercel.app",
-      "*",
-    ],
+    origin: "*",
   })
 );
 app.use(express.json());
+
+app.use("/v2/api", v2InterviewRoutes);
+app.use("/v2/api", jobRoutes);
+app.use("/v2", (req, res) => {
+  res.json({
+    success: true,
+    message: "Welcome to the Interview API v2",
+  });
+});
 
 app.use("/api", interviewRoutes);
 app.use("/api", jobRoutes);
