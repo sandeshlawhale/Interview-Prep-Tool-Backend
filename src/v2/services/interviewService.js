@@ -44,15 +44,13 @@ export class InterviewService {
       );
     }
 
-    let response;
-
     let conversationChain;
-    conversationChain = await this.aiService.createInterviewChainSkillsBased(
+    conversationChain = await this.aiService.nextQuestionChain(
       session.skills,
       session.domain
     );
 
-    response = await conversationChain.invoke({
+    const response = await conversationChain.invoke({
       input: "Generate the next question based on the conversation history.",
       chat_history: session.chatHistory.map((msg) =>
         msg.role === "human"
@@ -61,7 +59,6 @@ export class InterviewService {
       ),
     });
 
-    console.log("response in backend: ===>>>", response);
     const answerContent = response.content;
 
     session.chatHistory.push({ role: "ai", content: answerContent });
@@ -82,7 +79,7 @@ export class InterviewService {
     let response;
     let data;
 
-    response = await this.aiService.askIntroQuestionSkillsBased(
+    response = await this.aiService.introQuestionChain(
       session.skills,
       session.domain,
       session.jobRole,
@@ -136,30 +133,6 @@ export class InterviewService {
     return Array.from(JSON.parse(recommendedSkills.content));
   }
 
-  async reviseAnswer(sessionId) {
-    const session = await InterviewSession.findById(sessionId);
-    if (!session) throw new Error("Session not found");
-
-    if (session.status === "completed") {
-      throw new AppError(
-        "Interview is already completed, can not revise answer",
-        400
-      );
-    }
-
-    const lastMessage = session.chatHistory.pop();
-    if (!lastMessage || lastMessage.role !== "human")
-      throw new AppError("No recent human answer to revise.", 400);
-
-    session.currentStep = "revise";
-    await session.save();
-
-    const lastQuestion = session.chatHistory
-      .filter((m) => m.role === "ai")
-      .slice(-1)[0]?.content;
-    return { question: lastQuestion };
-  }
-
   async submitInterview(sessionId) {
     const session = await InterviewSession.findById(sessionId);
     if (!session) throw new AppError("Session not found", 400);
@@ -208,6 +181,8 @@ export class InterviewService {
     try {
       const chatHistory = session.chatHistory;
       const qaPairs = [];
+
+      // generateing false feedback error comes form here, fix with the conditioning
 
       for (let i = 0; i < chatHistory.length - 1; i += 2) {
         const aiMsg = chatHistory[i];

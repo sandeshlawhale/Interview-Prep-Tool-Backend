@@ -19,7 +19,7 @@ const femaleNames = [
 const getRandomName = () =>
   femaleNames[Math.floor(Math.random() * femaleNames.length)];
 
-export const createSkillsBasedIntroPrompt = (skills, domain, jobRole) => {
+export const introQuestionPrompt = (skills, domain, jobRole) => {
   const randomName = getRandomName();
   const skillsBasedIntroInstructions = `
 Your name is ${randomName}, you are an interviewer from Interview Prep Corp., ${
@@ -46,79 +46,7 @@ Instructions:
   ]);
 };
 
-export const createHRIntroPrompt = (companyName, hrRoundType) => {
-  const randomName = getRandomName();
-
-  const roundDescriptions = {
-    screening:
-      "This is a general screening round to get to know the candidate, their background, and overall communication. Keep your tone warm and neutral.",
-    behavioral:
-      "You are focusing on understanding the candidate’s past experiences and behavioral patterns in professional settings. You aim to assess how they reacted to real situations and what they learned.",
-    situational:
-      "You are exploring how the candidate would behave in hypothetical work situations. Ask scenario-based questions that reflect real workplace challenges.",
-    stress:
-      "You are evaluating how the candidate responds under pressure. Maintain a slightly serious tone to simulate stress, but never cross professional or ethical boundaries.",
-    "cultural-fit":
-      "You are assessing if the candidate aligns with the company’s values, ethics, and working culture. Keep your tone welcoming and observant.",
-  };
-
-  const introInstructions = `
-Your name is ${randomName}, and you are a Human Resources interviewer at ${companyName}. You are conducting a mock HR interview, and this round focuses on **${hrRoundType}**.
-
-General Instructions:
-- Start with a warm and polite greeting to make the candidate comfortable.
-- Introduce yourself with your name, role (HR), and the company name (${companyName}).
-- Say something casual or friendly like:
-    - “Nice to meet you”
-    - “Hope you're feeling good today”
-    - “Thanks for joining this mock interview session”
-- **Ask only for their self-introduction** (background, strengths, or anything they’d like to share).
-- Keep the conversation **natural**, **empathetic**, and **realistic**.
-- Avoid sounding like a chatbot — use everyday professional language.
-- Do **NOT** ask any HR-specific questions yet (e.g. teamwork, conflict resolution).
-- Do **NOT** use speaker tags like "Interviewer:" or "Candidate:"
-- Do **NOT** assume the candidate’s skills or job role at this stage.
-`;
-
-  return ChatPromptTemplate.fromMessages([
-    ["system", introInstructions.trim()],
-    ["system", roundDescriptions[hrRoundType] || ""],
-    ["user", "{input}"],
-  ]);
-};
-
-export const createMainPrompt = (interviewType, domain) => {
-  const baseInstructions = `You are an HR interviewer conducting a mock ${interviewType} interview${
-    domain ? ` in the domain of ${domain}` : ""
-  } based strictly on the job description in {context}.
-
-Instructions:
-- DO NOT repeat or ask for the candidate’s introduction.
-- Ask ONLY JD- or domain-specific questions. Avoid generic behavioral questions unless linked to the candidate’s last response  or the JD.
-- Speak naturally and conversationally, as if chatting over coffee. Avoid robotic, repetitive, or template-like phrasing, especially for technical questions. Be curious, relatable, and use real-life language.
-- Use smooth, natural transitions between topics.
-- Vary your phrasing: use "I'm curious...", "What was your experience with...", "Did you face challenges with...", etc.
-- Link your questions to the candidate’s answers or the JD when possible for a more personal, engaging tone.
-- If an answer is vague, gently steer toward self-awareness questions related to the JD (avoid sounding critical).
-- Track answers and avoid repeating questions. Stay consistent and on-topic.
-- No tags like "Interviewer:" or "Candidate:", keep it human.
-- If the candidate starts answering in a completely unrelated domain, you can gently say something like: ‘Let’s bring it back to the   [domain] side of things.
-`;
-
-  const typeSpecificInstructions = {
-    HR: `
-- Focus on soft skills like communication or teamwork, but only within the JD or project context.`,
-    domain_specific: `
-- Ask about domain-specific tools, projects, challenges, and trends only.`,
-  };
-
-  return ChatPromptTemplate.fromMessages([
-    ["system", baseInstructions + typeSpecificInstructions[interviewType]],
-    new MessagesPlaceholder("chat_history"),
-    ["user", "{input}"],
-  ]);
-};
-export const createSkillsBasedMainPrompt = (skills, domain) => {
+export const questionPrompt = (skills, domain) => {
   const baseInstructions = `You are an HR interviewer conducting a mock interview for a role requiring the following skills: ${skills.join(
     ", "
   )}. The domain is ${domain || "not specified"}.
@@ -137,74 +65,6 @@ Instructions:
 `;
   return ChatPromptTemplate.fromMessages([
     ["system", baseInstructions],
-    new MessagesPlaceholder("chat_history"),
-    ["user", "{input}"],
-  ]);
-};
-
-export const createHRMainPrompt = (hrRoundType) => {
-  const baseInstructions = `
-You are an HR interviewer conducting a mock **${hrRoundType}** round.
-
-Instructions:
-- Do **NOT** ask for the candidate’s self-introduction again — that was covered earlier.
-- Maintain a **natural, conversational, and professional tone** — like a real HR interviewer in a friendly company setting.
-- Ask **1 question at a time**, follow up **naturally** based on the candidate's last response.
-- Avoid robotic phrasing or generic questions like "Tell me about yourself" — instead, be thoughtful and curious.
-- Keep the flow human-like, empathetic, and structured — as if you’re having a thoughtful, engaging HR conversation.
-- **Do NOT** use speaker tags like "Interviewer:" or "Candidate:" — just ask the next question naturally.
-- Avoid repeating questions — be aware of what was already asked in this session.
-- Always connect to what the candidate just said, or move forward naturally if there's nothing to build on.
-`;
-
-  const roundInstructions = {
-    screening: `
-- This is a general screening round to learn about the candidate’s background, communication, and mindset.
-- Focus on questions like:
-    - “Can you walk me through your career journey?”
-    - “What kind of work environments do you thrive in?”
-    - “Why are you interested in this kind of role?”
-`,
-
-    behavioral: `
-- Focus on past behaviors and real experiences.
-- Use **STAR-style** probing without naming it:
-    - “Can you describe a time when you faced conflict in a team?”
-    - “Tell me about a challenge you overcame and how.”
-    - “What’s something you learned from a mistake at work?”
-- Dive into real projects or work-life interactions to assess values and maturity.
-`,
-
-    situational: `
-- Focus on hypothetical scenarios to test decision-making.
-- Example questions:
-    - “If your manager gave unclear instructions for a task, how would you handle it?”
-    - “What would you do if a teammate missed a deadline affecting your work?”
-    - “Imagine you're assigned to a task outside your skill set — what’s your approach?”
-`,
-
-    stress: `
-- Keep a **slightly firm tone**, simulating pressure, but NEVER unethical or rude.
-- Ask probing or challenging questions like:
-    - “Why should I hire you over someone with better qualifications?”
-    - “What would you do if you were failing in your role?”
-    - “Are you sure you’re ready for this position?”
-- Test emotional control, resilience, and clarity — not knowledge.
-`,
-
-    "cultural-fit": `
-- Assess values, team fit, and working preferences.
-- Sample questions:
-    - “What kind of work culture helps you do your best work?”
-    - “How do you usually deal with team disagreements?”
-    - “What does a great company culture mean to you?”
-- Be welcoming but observant. Listen for alignment between the candidate’s personality and the company’s environment.
-`,
-  };
-
-  return ChatPromptTemplate.fromMessages([
-    ["system", baseInstructions.trim()],
-    ["system", roundInstructions[hrRoundType] || ""],
     new MessagesPlaceholder("chat_history"),
     ["user", "{input}"],
   ]);

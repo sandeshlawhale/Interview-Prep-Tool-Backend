@@ -72,20 +72,6 @@ export const postAnswer = async (req, res, next) => {
   }
 };
 
-export const reviseAnswer = async (req, res, next) => {
-  try {
-    const sessionId = req.params.sessionId;
-    const result = await interviewService.reviseAnswer(sessionId);
-    res.json({
-      success: true,
-      message: "Previous Question To Revise Answer",
-      question: result.question,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const submitInterview = async (req, res, next) => {
   try {
     const sessionId = req.params.sessionId;

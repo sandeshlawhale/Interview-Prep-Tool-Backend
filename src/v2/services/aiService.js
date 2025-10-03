@@ -1,24 +1,13 @@
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import { createRetrievalChain } from "langchain/chains/retrieval";
-import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retriever";
-import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { Document } from "@langchain/core/documents";
-import {
-  ChatPromptTemplate,
-  MessagesPlaceholder,
-} from "@langchain/core/prompts";
 import { createModel, createEmbeddings } from "../config/openai.js";
 import {
-  // createIntroPrompt,
-  createMainPrompt,
-  createSkillsBasedIntroPrompt,
-  createSkillsBasedMainPrompt,
   feedbackPrompt,
   finalFeedbackPrompt,
   getSkillsPrompt,
-  createHRIntroPrompt,
-  createHRMainPrompt,
+  questionPrompt,
+  introQuestionPrompt,
 } from "../utils/prompts.js";
 import { z } from "zod";
 import { jsonrepair } from "jsonrepair";
@@ -40,104 +29,15 @@ export class AIService {
     const splitDocs = await splitter.splitDocuments(docs);
     return await MemoryVectorStore.fromDocuments(splitDocs, this.embeddings);
   }
-  async createInterviewChain(jobDescription, interviewType, domain) {
-    const vectorstore = await this.initializeVectorStore(jobDescription);
-    const retriever = vectorstore.asRetriever({ k: 2 });
 
-    const retrieverPrompt = ChatPromptTemplate.fromMessages([
-      new MessagesPlaceholder("chat_history"),
-      ["user", "{input}"],
-      [
-        "user",
-        "Given the conversation, generate a search query for job description information.",
-      ],
-    ]);
-
-    const retrieverChain = await createHistoryAwareRetriever({
-      llm: this.model,
-      retriever,
-      rephrasePrompt: retrieverPrompt,
-    });
-
-    const mainPrompt = createMainPrompt(interviewType, domain);
-    const chain = await createStuffDocumentsChain({
-      llm: this.model,
-      prompt: mainPrompt,
-    });
-
-    return await createRetrievalChain({
-      combineDocsChain: chain,
-      retriever: retrieverChain,
-    });
-  }
-  async createInterviewChainSkillsBased(skills, domain) {
-    const mainPrompt = createSkillsBasedMainPrompt(skills, domain);
+  async nextQuestionChain(skills, domain) {
+    const mainPrompt = questionPrompt(skills, domain);
 
     return mainPrompt.pipe(this.model);
   }
 
-  async createHRInterviewChain(hrRoundType) {
-    const prompt = createHRMainPrompt(hrRoundType);
-    return prompt.pipe(this.model);
-  }
-
-  // async askIntroQuestion(
-  //   jobDescription,
-  //   interviewType,
-  //   domain,
-  //   companyName,
-  //   chatHistory,
-  //   jobRole,
-  //   input
-  // ) {
-  //   const vectorstore = await this.initializeVectorStore(jobDescription);
-  //   const retriever = vectorstore.asRetriever({ k: 2 });
-
-  //   const retrieverPrompt = ChatPromptTemplate.fromMessages([
-  //     new MessagesPlaceholder("chat_history"),
-  //     ["user", "{input}"],
-  //     [
-  //       "user",
-  //       "Given the conversation, generate a search query for job description information.",
-  //     ],
-  //   ]);
-
-  //   const retrieverChain = await createHistoryAwareRetriever({
-  //     llm: this.model,
-  //     retriever,
-  //     rephrasePrompt: retrieverPrompt,
-  //   });
-
-  //   const introPrompt = createIntroPrompt({
-  //     interviewType,
-  //     domain,
-  //     companyName,
-  //     jobRole,
-  //   });
-  //   const introChain = await createStuffDocumentsChain({
-  //     llm: this.model,
-  //     prompt: introPrompt,
-  //   });
-
-  //   const chain = await createRetrievalChain({
-  //     combineDocsChain: introChain,
-  //     retriever: retrieverChain,
-  //   });
-
-  //   return await chain.invoke({
-  //     input,
-  //     chat_history: chatHistory,
-  //   });
-  // }
-
-  async askIntroQuestionSkillsBased(
-    skills,
-    domain,
-    jobRole,
-    chatHistory,
-    input
-  ) {
-    const skillsPrompt = createSkillsBasedIntroPrompt(skills, domain, jobRole);
+  async introQuestionChain(skills, domain, jobRole, chatHistory, input) {
+    const skillsPrompt = introQuestionPrompt(skills, domain, jobRole);
 
     const chain = skillsPrompt.pipe(this.model);
 

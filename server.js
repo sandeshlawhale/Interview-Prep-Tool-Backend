@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import interviewRoutes from "./src/routes/interviewRoutes.js";
-import jobRoutes from "./src/routes/jobRoutes.js";
-import { errorHandler } from "./src/middleware/errorHandler.js";
-import { connectDB } from "./src/config/database.js";
+import interviewRoutes from "./src/v1/routes/interviewRoutes.js";
+import jobRoutes from "./src/v1/routes/jobRoutes.js";
+import { errorHandler } from "./src/v1/middleware/errorHandler.js";
+import { connectDB } from "./src/v1/config/database.js";
 
 import v2InterviewRoutes from "./src/v2/routes/interviewRoutes.js";
 
