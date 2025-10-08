@@ -18,8 +18,8 @@ connectDB();
 const allowedOrigins = [
   "https://interview-prep-tool-mu.vercel.app",
   "https://interview-prep-tool-obkvw1kyv-sandesh-lawhales-projects.vercel.app",
-  "https://interview-prep-tool-v2.vercel.app/",
-  "https://interview-prep-tool-v2-git-main-sandesh-lawhales-projects.vercel.app/",
+  "https://interview-prep-tool-v2.vercel.app",
+  "https://interview-prep-tool-v2-git-main-sandesh-lawhales-projects.vercel.app",
 ];
 
 app.use(
